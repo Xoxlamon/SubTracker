@@ -1,128 +1,227 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SubTracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#0f0f1a;color:#e0e0ff;min-height:100vh}
-.header{background:#1a1a2e;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a2a4a}
-.header h1{font-size:1.4rem;color:#7b7bff}
-.total-badge{background:#7b7bff;color:#fff;padding:6px 14px;border-radius:20px;font-size:.9rem}
-.container{max-width:900px;margin:0 auto;padding:24px}
-.add-form{background:#1a1a2e;border-radius:12px;padding:20px;margin-bottom:24px;border:1px solid #2a2a4a}
-.add-form h2{margin-bottom:16px;font-size:1rem;color:#aaaaff}
-.form-row{display:flex;gap:10px;flex-wrap:wrap}
-.form-row input,.form-row select{flex:1;min-width:140px;background:#0f0f1a;border:1px solid #3a3a5a;color:#e0e0ff;padding:10px 14px;border-radius:8px;font-size:.9rem;outline:none}
-.form-row input:focus,.form-row select:focus{border-color:#7b7bff}
-.form-row button{background:#7b7bff;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.9rem;white-space:nowrap}
-.form-row button:hover{background:#6060ee}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.card{background:#1a1a2e;border-radius:12px;padding:18px;border:1px solid #2a2a4a;position:relative}
-.card-name{font-size:1.1rem;font-weight:600;margin-bottom:6px}
-.card-price{color:#7b7bff;font-size:1.2rem;font-weight:700;margin-bottom:4px}
-.card-info{font-size:.8rem;color:#8888aa;margin-bottom:12px}
-.card-actions{display:flex;gap:8px}
-.btn-del{background:#ff4444;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem}
-.btn-del:hover{background:#cc0000}
-.empty{text-align:center;color:#5555aa;padding:60px 0;font-size:1rem}
-.filter-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.filter-row select{background:#1a1a2e;border:1px solid #3a3a5a;color:#e0e0ff;padding:8px 12px;border-radius:8px;font-size:.85rem;outline:none}
-.status-active{border-left:3px solid #44ff88}
-.status-paused{border-left:3px solid #ffaa44}
-.status-cancelled{border-left:3px solid #ff4444}
+body{font-family:'Segoe UI',sans-serif;background:#0f0f1a;color:#e0e0ff;min-height:100vh;display:flex}
+.sidebar{width:220px;background:#1a1a2e;padding:20px;display:flex;flex-direction:column;gap:10px;border-right:1px solid #2a2a4a}
+.logo{color:#7b7bff;font-size:1.5rem;font-weight:700;margin-bottom:20px}
+.nav-item{padding:12px 16px;background:#16162a;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.2s}
+.nav-item:hover{background:#20203a}
+.nav-item.active{background:#7b7bff;color:#fff}
+.nav-icon{width:20px;height:20px}
+.main{flex:1;padding:32px;overflow-y:auto}
+.header{margin-bottom:32px}
+.header h1{font-size:2rem;margin-bottom:8px}
+.header p{color:#8888aa}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:32px}
+.stat-card{background:#1a1a2e;padding:24px;border-radius:12px;border:1px solid #2a2a4a}
+.stat-label{color:#8888aa;font-size:0.9rem;margin-bottom:8px}
+.stat-value{font-size:2rem;color:#7b7bff;font-weight:600;margin-bottom:4px}
+.stat-desc{color:#8888aa;font-size:0.85rem}
+.section{background:#1a1a2e;padding:24px;border-radius:12px;border:1px solid #2a2a4a;margin-bottom:24px}
+.section-title{font-size:1.2rem;margin-bottom:20px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.input-group{display:flex;flex-direction:column;gap:8px}
+.input-group label{font-size:0.9rem;color:#8888aa}
+.input-group input,.input-group select{padding:12px;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;color:#e0e0ff;font-size:1rem}
+.input-group input:focus,.input-group select:focus{outline:none;border-color:#7b7bff}
+.btn{padding:12px 24px;background:#7b7bff;border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:1rem;font-weight:600;transition:all 0.2s}
+.btn:hover{background:#6060ee}
+.subs-list{display:grid;gap:16px}
+.sub-card{background:#16162a;padding:20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid #2a2a4a}
+.sub-info h3{font-size:1.1rem;margin-bottom:8px}
+.sub-info p{color:#8888aa;font-size:0.9rem}
+.sub-price{font-size:1.5rem;color:#7b7bff;font-weight:600}
+.btn-delete{background:#ff4444;padding:8px 16px;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:0.9rem}
+.btn-delete:hover{background:#cc0000}
+.empty{text-align:center;color:#8888aa;padding:40px;font-size:1.1rem}
+.filter{display:flex;gap:12px;margin-bottom:20px}
+.filter select{padding:10px 16px;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;color:#e0e0ff;cursor:pointer}
+.total-badge{background:#7b7bff;padding:8px 16px;border-radius:20px;font-size:1.1rem;position:fixed;top:20px;right:32px}
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>SubTracker</h1>
-  <span class="total-badge" id="totalBadge">Итого: 0 ₽/мес</span>
+<div class="sidebar">
+<div class="logo">SubTracker</div>
+<div class="nav-item active" onclick="showDashboard()">📊 Дашборд</div>
+<div class="nav-item" onclick="showSubscriptions()">📋 Подписки</div>
 </div>
-<div class="container">
-  <div class="add-form">
-    <h2>Добавить подписку</h2>
-    <div class="form-row">
-      <input id="subName" type="text" placeholder="Название (Netflix, Spotify...)" />
-      <input id="subPrice" type="number" placeholder="Цена (руб)" min="0" step="0.01" />
-      <select id="subCycle">
-        <option value="monthly">Ежемесячно</option>
-        <option value="yearly">Ежегодно</option>
-        <option value="weekly">Еженедельно</option>
-      </select>
-      <select id="subStatus">
-        <option value="active">Активная</option>
-        <option value="paused">Пауза</option>
-        <option value="cancelled">Отменена</option>
-      </select>
-      <input id="subDate" type="date" title="Дата следующего платежа" />
-      <button onclick="addSub()">+ Добавить</button>
-    </div>
-  </div>
-  <div class="filter-row">
-    <select id="filterStatus" onchange="render()">
-      <option value="">Все статусы</option>
-      <option value="active">Активные</option>
-      <option value="paused">На паузе</option>
-      <option value="cancelled">Отменённые</option>
-    </select>
-  </div>
-  <div class="cards" id="cards"></div>
+<div class="main">
+<div class="total-badge" id="totalBadge">Итого: 0 ₽/мес</div>
+<div id="dashboardView">
+<div class="header">
+<h1>Обзор</h1>
+<p>Сводка по вашим подпискам</p>
+</div>
+<div class="stats">
+<div class="stat-card">
+<div class="stat-label">В месяц</div>
+<div class="stat-value" id="statMonth">0 ₽</div>
+<div class="stat-desc" id="statActiveCount">0 активных</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">В год</div>
+<div class="stat-value" id="statYear">0 ₽</div>
+<div class="stat-desc">суммарно</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">За 3 месяца</div>
+<div class="stat-value" id="stat3Month">0 ₽</div>
+<div class="stat-desc">прогноз</div>
+</div>
+<div class="stat-card">
+<div class="stat-label">Скоро списания</div>
+<div class="stat-value" id="statUpcoming">0</div>
+<div class="stat-desc">в течение 30 дней</div>
+</div>
+</div>
+<div class="section">
+<h2 class="section-title">По категориям (в месяц)</h2>
+<div class="empty" id="categoryEmpty">Нет данных</div>
+<div id="categoryList" style="display:none"></div>
+</div>
+<div class="section">
+<h2 class="section-title">Ближайшие списания</h2>
+<div class="empty" id="upcomingEmpty">Нет списаний в ближайшие 30 дней</div>
+<div id="upcomingList" style="display:none"></div>
+</div>
+</div>
+<div id="subscriptionsView" style="display:none">
+<div class="header">
+<h1>Подписки</h1>
+<p>Управление вашими подписками</p>
+</div>
+<div class="section">
+<h2 class="section-title">Добавить подписку</h2>
+<div class="form">
+<div class="input-group">
+<label>Название</label>
+<input type="text" id="subName" placeholder="Netflix, Spotify...">
+</div>
+<div class="input-group">
+<label>Цена (₽)</label>
+<input type="number" id="subPrice" placeholder="599">
+</div>
+<div class="input-group">
+<label>Период</label>
+<select id="subPeriod">
+<option value="monthly">Ежемесячно</option>
+<option value="yearly">Ежегодно</option>
+</select>
+</div>
+<div class="input-group">
+<label>Статус</label>
+<select id="subStatus">
+<option value="active">Активная</option>
+<option value="inactive">Неактивная</option>
+</select>
+</div>
+</div>
+<div class="input-group">
+<label>Следующее списание</label>
+<input type="date" id="subDate">
+</div>
+<button class="btn" onclick="addSubscription()" style="margin-top:16px">+ Добавить</button>
+</div>
+<div class="section">
+<h2 class="section-title">Ваши подписки</h2>
+<div class="filter">
+<select id="filterStatus" onchange="renderSubscriptions()">
+<option value="all">Все статусы</option>
+<option value="active">Активные</option>
+<option value="inactive">Неактивные</option>
+</select>
+</div>
+<div id="subsList"></div>
+</div>
+</div>
 </div>
 <script>
-let subs = JSON.parse(localStorage.getItem('subtracker') || '[]');
-function save(){localStorage.setItem('subtracker',JSON.stringify(subs));}
-function monthlyPrice(s){
-  if(s.cycle==='weekly') return s.price*4.33;
-  if(s.cycle==='yearly') return s.price/12;
-  return s.price;
+let subs=JSON.parse(localStorage.getItem('subscriptions'))||[];
+function saveSubs(){localStorage.setItem('subscriptions',JSON.stringify(subs));updateStats();renderSubscriptions()}
+function updateStats(){
+let active=subs.filter(s=>s.status==='active');
+let monthlyTotal=active.reduce((sum,s)=>sum+(s.period==='monthly'?s.price:s.price/12),0);
+document.getElementById('statMonth').textContent=Math.round(monthlyTotal)+' ₽';
+document.getElementById('statActiveCount').textContent=active.length+' активных';
+document.getElementById('statYear').textContent=Math.round(monthlyTotal*12)+' ₽';
+document.getElementById('stat3Month').textContent=Math.round(monthlyTotal*3)+' ₽';
+document.getElementById('totalBadge').textContent='Итого: '+Math.round(monthlyTotal)+' ₽/мес';
+let upcoming=active.filter(s=>{
+if(!s.nextDate)return false;
+let days=(new Date(s.nextDate)-new Date())/(1000*60*60*24);
+return days>=0&&days<=30;
+});
+document.getElementById('statUpcoming').textContent=upcoming.length;
+if(upcoming.length>0){
+document.getElementById('upcomingEmpty').style.display='none';
+document.getElementById('upcomingList').style.display='block';
+document.getElementById('upcomingList').innerHTML=upcoming.map(s=>`
+<div class="sub-card">
+<div class="sub-info">
+<h3>${s.name}</h3>
+<p>Списание: ${new Date(s.nextDate).toLocaleDateString('ru-RU')}</p>
+</div>
+<div class="sub-price">${s.price} ₽</div>
+</div>
+`).join('');
+}else{
+document.getElementById('upcomingEmpty').style.display='block';
+document.getElementById('upcomingList').style.display='none';
 }
-function cycleLabel(c){
-  if(c==='weekly') return 'Еженедельно';
-  if(c==='yearly') return 'Ежегодно';
-  return 'Ежемесячно';
 }
-function statusLabel(s){
-  if(s==='paused') return 'Пауза';
-  if(s==='cancelled') return 'Отменена';
-  return 'Активная';
+function addSubscription(){
+let name=document.getElementById('subName').value.trim();
+let price=parseFloat(document.getElementById('subPrice').value);
+let period=document.getElementById('subPeriod').value;
+let status=document.getElementById('subStatus').value;
+let nextDate=document.getElementById('subDate').value;
+if(!name||!price){
+alert('Заполните название и цену');return;
 }
-function addSub(){
-  const name=document.getElementById('subName').value.trim();
-  const price=parseFloat(document.getElementById('subPrice').value);
-  const cycle=document.getElementById('subCycle').value;
-  const status=document.getElementById('subStatus').value;
-  const date=document.getElementById('subDate').value;
-  if(!name||isNaN(price)||price<0){alert('Введите название и цену');return;}
-  subs.push({id:Date.now(),name,price,cycle,status,date});
-  save();
-  document.getElementById('subName').value='';
-  document.getElementById('subPrice').value='';
-  document.getElementById('subDate').value='';
-  render();
+subs.push({id:Date.now(),name,price,period,status,nextDate});
+saveSubs();
+document.getElementById('subName').value='';
+document.getElementById('subPrice').value='';
+document.getElementById('subDate').value='';
 }
 function deleteSub(id){
-  subs=subs.filter(s=>s.id!==id);
-  save();
-  render();
+subs=subs.filter(s=>s.id!==id);
+saveSubs();
 }
-function render(){
-  const filter=document.getElementById('filterStatus').value;
-  const list=filter?subs.filter(s=>s.status===filter):subs;
-  const cards=document.getElementById('cards');
-  if(!list.length){cards.innerHTML='<div class="empty">Подписок пока нет. Добавьте первую!</div>';}
-  else{
-    cards.innerHTML=list.map(s=>`<div class="card status-${s.status}">
-      <div class="card-name">${s.name}</div>
-      <div class="card-price">${s.price} ₽</div>
-      <div class="card-info">${cycleLabel(s.cycle)} &bull; ${statusLabel(s.status)}${s.date?' &bull; '+s.date:''}</div>
-      <div class="card-actions"><button class="btn-del" onclick="deleteSub(${s.id})">Удалить</button></div>
-    </div>`).join('');
-  }
-  const total=subs.filter(s=>s.status==='active').reduce((a,s)=>a+monthlyPrice(s),0);
-  document.getElementById('totalBadge').textContent='Итого: '+total.toFixed(0)+' ₽/мес';
+function renderSubscriptions(){
+let filter=document.getElementById('filterStatus').value;
+let filtered=filter==='all'?subs:subs.filter(s=>s.status===filter);
+let html=filtered.length===0?'<div class="empty">Подписок пока нет. Добавьте первую!</div>':filtered.map(s=>`
+<div class="sub-card">
+<div class="sub-info">
+<h3>${s.name}</h3>
+<p>${s.period==='monthly'?'Ежемесячно':'Ежегодно'} • ${s.status==='active'?'Активная':'Неактивная'}${s.nextDate?' • '+new Date(s.nextDate).toLocaleDateString('ru-RU'):''}</p>
+</div>
+<div style="display:flex;align-items:center;gap:20px">
+<div class="sub-price">${s.price} ₽</div>
+<button class="btn-delete" onclick="deleteSub(${s.id})">Удалить</button>
+</div>
+</div>
+`).join('');
+document.getElementById('subsList').innerHTML=html;
 }
-render();
+function showDashboard(){
+document.getElementById('dashboardView').style.display='block';
+document.getElementById('subscriptionsView').style.display='none';
+document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===0));
+}
+function showSubscriptions(){
+document.getElementById('dashboardView').style.display='none';
+document.getElementById('subscriptionsView').style.display='block';
+document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===1));
+}
+updateStats();
+renderSubscriptions();
 </script>
 </body>
 </html>
