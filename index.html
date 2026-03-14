@@ -13,6 +13,43 @@
     -->
     <meta name="generator" content="Perplexity Computer">
     <meta name="author" content="Perplexity Computer">
+        <script>
+      (function(){
+        var API_BASE = '';
+        var _origFetch = window.fetch;
+        window.fetch = function(url, opts) {
+          if (typeof url === 'string' && (url.indexOf('port/5000') !== -1 || url.indexOf('localhost') !== -1 || url.match(/^\/api\//))) {
+            var path = url.replace(/.*\/api\//, '');
+            var method = (opts && opts.method) ? opts.method.toUpperCase() : 'GET';
+            var body = opts && opts.body ? JSON.parse(opts.body) : null;
+            var subs = JSON.parse(localStorage.getItem('subtracker_subs') || '[]');
+            if (method === 'GET' && path.startsWith('subscriptions')) {
+              return Promise.resolve(new Response(JSON.stringify(subs), {status:200,headers:{'Content-Type':'application/json'}}));
+            }
+            if (method === 'POST' && path.startsWith('subscriptions')) {
+              var newSub = Object.assign({id: Date.now()}, body);
+              subs.push(newSub);
+              localStorage.setItem('subtracker_subs', JSON.stringify(subs));
+              return Promise.resolve(new Response(JSON.stringify(newSub), {status:201,headers:{'Content-Type':'application/json'}}));
+            }
+            if (method === 'PUT' && path.startsWith('subscriptions')) {
+              var id = parseInt(path.split('/')[1]);
+              subs = subs.map(function(s){ return s.id === id ? Object.assign(s, body) : s; });
+              localStorage.setItem('subtracker_subs', JSON.stringify(subs));
+              var updated = subs.find(function(s){ return s.id === id; });
+              return Promise.resolve(new Response(JSON.stringify(updated), {status:200,headers:{'Content-Type':'application/json'}}));
+            }
+            if (method === 'DELETE' && path.startsWith('subscriptions')) {
+              var id = parseInt(path.split('/')[1]);
+              subs = subs.filter(function(s){ return s.id !== id; });
+              localStorage.setItem('subtracker_subs', JSON.stringify(subs));
+              return Promise.resolve(new Response('{}', {status:200,headers:{'Content-Type':'application/json'}}));
+            }
+          }
+          return _origFetch.apply(this, arguments);
+        };
+      })();
+    </script>
     <meta property="og:see_also" content="https://www.perplexity.ai/computer">
     <link rel="author" href="https://www.perplexity.ai/computer">
     <meta charset="UTF-8" />
