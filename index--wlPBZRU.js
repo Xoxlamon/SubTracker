@@ -1,260 +1,392 @@
-// ... (весь код библиотек и компонентов остаётся без изменений) ...
+function ife() {
+  const { toast } = BR();
+  const [open, setOpen] = useState(false);
+  const [editingSub, setEditingSub] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const { data: subs = [], isLoading } = useQuery({ queryKey: ['/api/subscriptions'] });
 
-function ife(){
-  const{toast:e}=BR(),
-  [t,r]=T.useState(!1),
-  [n,i]=T.useState(null),
-  [a,s]=T.useState(null),
-  {data:l=[],isLoading:c}=$R({queryKey:["/api/subscriptions"]}),
-  f=Joe({
-    resolver:nse(Xce),
-    defaultValues:{
-      name:"",
-      category:"Другое",
-      price:0,
-      currency:"RUB",
-      billingCycle:"monthly",
-      nextBillingDate:"",
-      color:"#6366f1",
-      isActive:1,
-      notes:""
+  const form = useForm({
+    resolver: zodResolver(subscriptionSchema),
+    defaultValues: {
+      name: '',
+      category: 'Прочее',
+      price: 0,
+      currency: 'RUB',
+      billingCycle: 'monthly',
+      nextBillingDate: '',
+      color: '#6366f1',
+      isActive: 1,
+      notes: ''
     }
   });
 
-  // ✅ Исправленная функция открытия формы для новой подписки
-  function p(){
-    i(null);  // Очищаем состояние редактирования
-    f.reset({  // ✅ Сбрасываем форму к начальным значениям
-      name:"",
-      category:"Другое",
-      price:0,
-      currency:"RUB",
-      billingCycle:"monthly",
-      nextBillingDate:new Date().toISOString().slice(0,10),
-      color:"#6366f1",
-      isActive:1,
-      notes:""
+  // Новая подписка – чистая форма
+  const handleAddClick = () => {
+    setEditingSub(null);
+    form.reset({
+      name: '',
+      category: 'Прочее',
+      price: 0,
+      currency: 'RUB',
+      billingCycle: 'monthly',
+      nextBillingDate: new Date().toISOString().slice(0, 10),
+      color: '#6366f1',
+      isActive: 1,
+      notes: ''
     });
-    r(!0)
-  }
+    setOpen(true);
+  };
 
-  // ✅ Исправленная функция открытия формы для редактирования
-  function h(E){
-    i(E);  // Устанавливаем текущую подписку для редактирования
-    f.reset({  // ✅ Заполняем форму данными подписки
-      name:E.name,
-      category:E.category,
-      price:E.price,
-      currency:E.currency,
-      billingCycle:E.billingCycle,
-      nextBillingDate:E.nextBillingDate,
-      color:E.color,
-      isActive:E.isActive,
-      notes:E.notes??" "
+  // Редактирование – заполняем форму данными выбранной подписки
+  const handleEditClick = (sub) => {
+    setEditingSub(sub);
+    form.reset({
+      name: sub.name,
+      category: sub.category,
+      price: sub.price,
+      currency: sub.currency,
+      billingCycle: sub.billingCycle,
+      nextBillingDate: sub.nextBillingDate,
+      color: sub.color,
+      isActive: sub.isActive,
+      notes: sub.notes ?? ''
     });
-    r(!0)
-  }
+    setOpen(true);
+  };
 
-  // Мутация для создания
-  const v=Xf({
-    mutationFn:E=>Zf("POST","/api/subscriptions",E),
-    onSuccess:()=>{
-      pl.invalidateQueries({queryKey:["/api/subscriptions"]}),
-      f.reset(),  // ✅ Сбрасываем форму после успешного создания
-      r(!1),
-      e({title:"Подписка добавлена"})
+  const createMutation = useMutation({
+    mutationFn: (data) => apiRequest('POST', '/api/subscriptions', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscriptions'] });
+      form.reset();
+      setOpen(false);
+      toast({ title: 'Подписка добавлена' });
     },
-    onError:()=>e({title:"Ошибка",variant:"destructive"})
-  }),
-
-  // ✅ Исправленная мутация для обновления
-  x=Xf({
-    mutationFn:({id:E,data:A})=>Zf("PATCH",`/api/subscriptions/${E}`,A),
-    onSuccess:()=>{
-      pl.invalidateQueries({queryKey:["/api/subscriptions"]}),
-      f.reset(),  // ✅ Сбрасываем форму после успешного обновления
-      i(null),    // ✅ Очищаем состояние редактирования
-      r(!1),      // Закрываем диалог
-      e({title:"Сохранено"})
-    },
-    onError:()=>e({title:"Ошибка",variant:"destructive"})
-  }),
-
-  // Мутация для удаления
-  S=Xf({
-    mutationFn:E=>Zf("DELETE",`/api/subscriptions/${E}`),
-    onSuccess:()=>{
-      pl.invalidateQueries({queryKey:["/api/subscriptions"]}),
-      s(null),
-      e({title:"Удалено"})
-    },
-    onError:()=>e({title:"Ошибка",variant:"destructive"})
-  }),
-
-  // Мутация для переключения статуса
-  y=Xf({
-    mutationFn:({id:E,isActive:A})=>Zf("PATCH",`/api/subscriptions/${E}`,{isActive:A}),
-    onSuccess:()=>pl.invalidateQueries({queryKey:["/api/subscriptions"]})
+    onError: () => toast({ title: 'Ошибка', variant: 'destructive' })
   });
 
-  // ✅ Исправленная функция сохранения
-  function b(E){
-    n?x.mutate({id:n.id,data:E}):v.mutate(E)
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => apiRequest('PATCH', `/api/subscriptions/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscriptions'] });
+      form.reset();
+      setEditingSub(null);
+      setOpen(false);
+      toast({ title: 'Сохранено' });
+    },
+    onError: () => toast({ title: 'Ошибка', variant: 'destructive' })
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => apiRequest('DELETE', `/api/subscriptions/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscriptions'] });
+      setDeleteId(null);
+      toast({ title: 'Удалено' });
+    },
+    onError: () => toast({ title: 'Ошибка', variant: 'destructive' })
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }) => apiRequest('PATCH', `/api/subscriptions/${id}`, { isActive }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/subscriptions'] })
+  });
+
+  const handleSubmit = (data) => {
+    if (editingSub) {
+      updateMutation.mutate({ id: editingSub.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-3">
+        <Skeleton className="h-8 w-48" />
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
   }
 
-  if(c)return N.jsxs("div",{className:"p-6 space-y-3",children:[
-    N.jsx(Ap,{className:"h-8 w-48"}),
-    [...Array(4)].map((E,A)=>N.jsx(Ap,{className:"h-16 w-full"},A))
-  ]});
+  const activeSubs = subs.filter(s => s.isActive === 1);
+  const inactiveSubs = subs.filter(s => s.isActive === 0);
 
-  const _=l.filter(E=>E.isActive===1),
-  P=l.filter(E=>E.isActive===0);
+  return (
+    <div className="p-6 max-w-3xl mx-auto space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground" data-testid="heading-subscriptions">
+            Подписки
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {subs.length} подписок · {activeSubs.length} активных
+          </p>
+        </div>
+        <Button size="sm" onClick={handleAddClick} data-testid="button-add-subscription">
+          <Plus size={15} className="mr-1" />
+          Добавить
+        </Button>
+      </div>
 
-  return N.jsxs("div",{className:"p-6 max-w-3xl mx-auto space-y-5",children:[
-    N.jsxs("div",{className:"flex items-center justify-between",children:[
-      N.jsxs("div",{children:[
-        N.jsx("h1",{className:"text-xl font-bold text-foreground","data-testid":"heading-subscriptions",children:"Подписки"}),
-        N.jsxs("p",{className:"text-sm text-muted-foreground mt-0.5",children:[
-          l.length," подписок · ",_.length," активных"
-        ]})
-      ]}),
-      N.jsxs(Ad,{size:"sm",onClick:p,"data-testid":"button-add-subscription",children:[
-        N.jsx(JV,{size:15,className:"mr-1"}),
-        " Добавить"
-      ]})
-    ]}),
+      {activeSubs.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Активные
+          </p>
+          {activeSubs.map(sub => (
+            <SubscriptionRow
+              key={sub.id}
+              sub={sub}
+              onEdit={handleEditClick}
+              onDelete={setDeleteId}
+              onToggle={(id) => toggleMutation.mutate({ id, isActive: 0 })}
+            />
+          ))}
+        </div>
+      )}
 
-    _.length>0&&N.jsxs("div",{className:"space-y-2",children:[
-      N.jsx("p",{className:"text-xs font-medium text-muted-foreground uppercase tracking-wide",children:"Активные"}),
-      _.map(E=>N.jsx(dR,{sub:E,onEdit:h,onDelete:s,onToggle:A=>y.mutate({id:A,isActive:0})},E.id))
-    ]}),
+      {inactiveSubs.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Приостановленные
+          </p>
+          {inactiveSubs.map(sub => (
+            <SubscriptionRow
+              key={sub.id}
+              sub={sub}
+              onEdit={handleEditClick}
+              onDelete={setDeleteId}
+              onToggle={(id) => toggleMutation.mutate({ id, isActive: 1 })}
+              inactive
+            />
+          ))}
+        </div>
+      )}
 
-    P.length>0&&N.jsxs("div",{className:"space-y-2",children:[
-      N.jsx("p",{className:"text-xs font-medium text-muted-foreground uppercase tracking-wide",children:"Приостановленные"}),
-      P.map(E=>N.jsx(dR,{sub:E,onEdit:h,onDelete:s,onToggle:A=>y.mutate({id:A,isActive:1}),inactive:!0},E.id))
-    ]}),
+      {subs.length === 0 && (
+        <div className="py-16 text-center text-muted-foreground">
+          <p className="text-base font-medium">Подписок пока нет</p>
+          <p className="text-sm mt-1">Нажмите «Добавить», чтобы начать</p>
+        </div>
+      )}
 
-    l.length===0&&N.jsxs("div",{className:"py-16 text-center text-muted-foreground",children:[
-      N.jsx("p",{className:"text-base font-medium",children:"Подписок пока нет"}),
-      N.jsx("p",{className:"text-sm mt-1",children:"Нажмите «Добавить», чтобы начать"})
-    ]}),
+      {/* Диалог создания/редактирования */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingSub ? 'Редактировать подписку' : 'Новая подписка'}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Название</FormLabel>
+                    <FormControl>
+                      <Input data-testid="input-name" placeholder="Netflix, Spotify…" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-    // Диалог создания/редактирования
-    N.jsx(Pue,{open:t,onOpenChange:r,children:N.jsxs(WL,{className:"max-w-md",children:[
-      N.jsx(HL,{children:N.jsx(GL,{children:n?"Редактировать подписку":"Новая подписка"})}),
-      N.jsx(kue,{...f,children:N.jsxs("form",{onSubmit:f.handleSubmit(b),className:"space-y-4",children:[
-        N.jsx(pa,{control:f.control,name:"name",render:({field:E})=>N.jsxs(_i,{children:[
-          N.jsx(Pi,{children:"Название"}),
-          N.jsx(va,{children:N.jsx(gl,{"data-testid":"input-name",placeholder:"Netflix, Spotify…",...E})}),
-          N.jsx(Oi,{})
-        ]})}),
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Цена</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-price" type="number" min="0" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Валюта</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-currency">
+                            <SelectValue placeholder="Валюта" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CURRENCIES.map(curr => (
+                            <SelectItem key={curr} value={curr}>
+                              {curr}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-        N.jsxs("div",{className:"grid grid-cols-2 gap-3",children:[
-          N.jsx(pa,{control:f.control,name:"price",render:({field:E})=>N.jsxs(_i,{children:[
-            N.jsx(Pi,{children:"Цена"}),
-            N.jsx(va,{children:N.jsx(gl,{"data-testid":"input-price",type:"number",min:"0",step:"0.01",...E})}),
-            N.jsx(Oi,{})
-          ]})}),
-          N.jsx(pa,{control:f.control,name:"currency",render:({field:E})=>N.jsxs(_i,{children:[
-            N.jsx(Pi,{children:"Валюта"}),
-            N.jsxs(dx,{onValueChange:E.onChange,value:E.value,children:[
-              N.jsx(va,{children:N.jsx(Md,{"data-testid":"select-currency",children:N.jsx(px,{})})}),
-              N.jsx(jd,{children:Jce.map(A=>N.jsx(Rd,{value:A,children:A},A))})
-            ]}),
-            N.jsx(Oi,{})
-          ]})})
-        ]}),
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Категория</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-category">
+                            <SelectValue placeholder="Категория" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CATEGORIES.map(cat => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="billingCycle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Период</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-cycle">
+                            <SelectValue placeholder="Период" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {BILLING_CYCLES.map(cycle => (
+                            <SelectItem key={cycle.value} value={cycle.value}>
+                              {cycle.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-        N.jsxs("div",{className:"grid grid-cols-2 gap-3",children:[
-          N.jsx(pa,{control:f.control,name:"category",render:({field:E})=>N.jsxs(_i,{children:[
-            N.jsx(Pi,{children:"Категория"}),
-            N.jsxs(dx,{onValueChange:E.onChange,value:E.value,children:[
-              N.jsx(va,{children:N.jsx(Md,{"data-testid":"select-category",children:N.jsx(px,{})})}),
-              N.jsx(jd,{children:Zce.map(A=>N.jsx(Rd,{value:A,children:A},A))})
-            ]}),
-            N.jsx(Oi,{})
-          ]})}),
-          N.jsx(pa,{control:f.control,name:"billingCycle",render:({field:E})=>N.jsxs(_i,{children:[
-            N.jsx(Pi,{children:"Период"}),
-            N.jsxs(dx,{onValueChange:E.onChange,value:E.value,children:[
-              N.jsx(va,{children:N.jsx(Md,{"data-testid":"select-cycle",children:N.jsx(px,{})})}),
-              N.jsx(jd,{children:NB.map(A=>N.jsx(Rd,{value:A.value,children:A.label},A.value))})
-            ]}),
-            N.jsx(Oi,{})
-          ]})})
-        ]}),
+              <FormField
+                control={form.control}
+                name="nextBillingDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Следующее списание</FormLabel>
+                    <FormControl>
+                      <Input data-testid="input-date" type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        N.jsx(pa,{control:f.control,name:"nextBillingDate",render:({field:E})=>N.jsxs(_i,{children:[
-          N.jsx(Pi,{children:"Следующее списание"}),
-          N.jsx(va,{children:N.jsx(gl,{"data-testid":"input-date",type:"date",...E})}),
-          N.jsx(Oi,{})
-        ]})}),
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Цвет</FormLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {COLORS.map(color => (
+                        <button
+                          key={color}
+                          type="button"
+                          data-testid={`color-${color}`}
+                          onClick={() => field.onChange(color)}
+                          className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
+                          style={{
+                            backgroundColor: color,
+                            borderColor: field.value === color ? 'white' : 'transparent',
+                            outline: field.value === color ? `2px solid ${color}` : 'none'
+                          }}
+                        />
+                      ))}
+                      <input
+                        type="color"
+                        value={field.value}
+                        onChange={e => field.onChange(e.target.value)}
+                        className="w-6 h-6 rounded cursor-pointer border-0"
+                        title="Свой цвет"
+                      />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        N.jsx(pa,{control:f.control,name:"color",render:({field:E})=>N.jsxs(_i,{children:[
-          N.jsx(Pi,{children:"Цвет"}),
-          N.jsxs("div",{className:"flex flex-wrap gap-2",children:[
-            efe.map(A=>N.jsx("button",{
-              type:"button",
-              "data-testid":`color-${A}`,
-              onClick:()=>E.onChange(A),
-              className:"w-6 h-6 rounded-full border-2 transition-transform hover:scale-110",
-              style:{
-                backgroundColor:A,
-                borderColor:E.value===A?"white":"transparent",
-                outline:E.value===A?`2px solid ${A}`:"none"
-              }
-            },A)),
-            N.jsx("input",{
-              type:"color",
-              value:E.value,
-              onChange:A=>E.onChange(A.target.value),
-              className:"w-6 h-6 rounded cursor-pointer border-0",
-              title:"Свой цвет"
-            })
-          ]}),
-          N.jsx(Oi,{})
-        ]})}),
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Заметки (опционально)</FormLabel>
+                    <FormControl>
+                      <Input
+                        data-testid="input-notes"
+                        placeholder="Тариф, аккаунт…"
+                        {...field}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        N.jsx(pa,{control:f.control,name:"notes",render:({field:E})=>N.jsxs(_i,{children:[
-          N.jsx(Pi,{children:"Заметки (опционально)"}),
-          N.jsx(va,{children:N.jsx(gl,{"data-testid":"input-notes",placeholder:"Тариф, аккаунт…",...E,value:E.value??" "})}),
-          N.jsx(Oi,{})
-        ]})}),
+              <div className="flex gap-2 justify-end pt-1">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel">
+                  Отмена
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-save">
+                  {editingSub ? 'Сохранить' : 'Добавить'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-        N.jsxs("div",{className:"flex gap-2 justify-end pt-1",children:[
-          N.jsx(Ad,{
-            type:"button",
-            variant:"outline",
-            onClick:()=>r(!1),
-            "data-testid":"button-cancel",
-            children:"Отмена"
-          }),
-          N.jsx(Ad,{
-            type:"submit",
-            disabled:v.isPending||x.isPending,
-            "data-testid":"button-save",
-            children:n?"Сохранить":"Добавить"
-          })
-        ]})
-      ]})})]})}),
-
-    // Диалог подтверждения удаления
-    N.jsx(Yce,{open:a!==null,onOpenChange:()=>s(null),children:N.jsxs(_B,{children:[
-      N.jsxs(PB,{children:[
-        N.jsx(TB,{children:"Удалить подписку?"}),
-        N.jsx(EB,{children:"Это действие нельзя отменить."})
-      ]}),
-      N.jsxs(OB,{children:[
-        N.jsx(CB,{"data-testid":"button-delete-cancel",children:"Отмена"}),
-        N.jsx(AB,{
-          "data-testid":"button-delete-confirm",
-          onClick:()=>a!==null&&S.mutate(a),
-          className:"bg-destructive text-destructive-foreground hover:bg-destructive/90",
-          children:"Удалить"
-        })
-      ]})
-    ]})})
-  ]})
+      {/* Диалог подтверждения удаления */}
+      <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить подписку?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-delete-cancel">Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              data-testid="button-delete-confirm"
+              onClick={() => deleteId !== null && deleteMutation.mutate(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
-
-// ... (остальной код приложения остаётся без изменений) ...
